@@ -4,9 +4,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 let mockNotificationsState = {
   unreadCount: 0,
+  notifications: [],
   loading: false,
   error: null,
+  consecutiveErrors: 0,
   setIsPolling: () => {},
+  retryFetch: () => {},
+  clearAllNotifications: () => {},
+  clearNotification: () => {},
+  markAsRead: () => {},
+  markAllAsRead: () => {},
 };
 
 mock.module('../../shared/hooks/useNotifications', () => ({
@@ -25,9 +32,16 @@ describe('NotificationBell', () => {
   beforeEach(() => {
     mockNotificationsState = {
       unreadCount: 0,
+      notifications: [],
       loading: false,
       error: null,
+      consecutiveErrors: 0,
       setIsPolling: () => {},
+      retryFetch: () => {},
+      clearAllNotifications: () => {},
+      clearNotification: () => {},
+      markAsRead: () => {},
+      markAllAsRead: () => {},
     };
   });
 
@@ -45,7 +59,9 @@ describe('NotificationBell', () => {
       unreadCount: 5,
     };
 
-    render(<NotificationBell apiKey={mockApiKey} />);
+    // The icon variant shows a dot indicator; the numeric badge is rendered in
+    // the sidebar variant, so assert the count there.
+    render(<NotificationBell apiKey={mockApiKey} variant="sidebar" />);
 
     expect(screen.getByText('5')).toBeTruthy();
   });

@@ -15,7 +15,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: millionco/react-doctor@main
+      # Pinned to the v2.4.0 release commit. `@main` is a mutable ref, so a new
+      # commit upstream could silently change what runs in this workflow.
+      - uses: millionco/react-doctor@695e46eee203a5d1855020191aa7e9c010a1250e # v2.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           diff: main

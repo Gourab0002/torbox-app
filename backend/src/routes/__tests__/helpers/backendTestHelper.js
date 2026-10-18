@@ -1,15 +1,18 @@
 import express from 'express';
-import { mkdirSync, rmSync } from 'fs';
+import { mkdirSync } from 'fs';
 import path from 'path';
 import DatabaseMaster from '../../../database/Database.js';
 import UserDatabaseManager from '../../../database/UserDatabaseManager.js';
 import { createRequireRegisteredUser } from '../../../middleware/userAuth.js';
+import cache from '../../../utils/cache.js';
+import { pruneStaleTestDirs, removeTempDir } from './tempDirCleanup.js';
 
 export async function createBackendTestEnv() {
+  pruneStaleTestDirs(path.join(process.cwd(), 'data'));
   const tempDir = path.join(
     process.cwd(),
     'data',
-    `test-backend-routes-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    `test-${process.pid}-backend-routes-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
   );
   mkdirSync(path.join(tempDir, 'users'), { recursive: true });
   mkdirSync(path.join(tempDir, 'uploads'), { recursive: true });
@@ -36,7 +39,10 @@ export function cleanupBackendTestEnv({ tempDir, masterDatabase, userDatabaseMan
   } catch (_) {
     // ignore cleanup errors
   }
-  rmSync(tempDir, { recursive: true, force: true });
+  // The user-registry cache is a process-global singleton keyed only by authId;
+  // without clearing it the next test resolves stale paths from the previous env.
+  cache.clear();
+  removeTempDir(tempDir);
   delete process.env.MASTER_DB_PATH;
   delete process.env.USER_DB_DIR;
   delete process.env.UPLOAD_STORAGE_DIR;

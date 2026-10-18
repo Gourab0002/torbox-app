@@ -7,13 +7,16 @@ import {
   sanitizeError,
 } from '../sanitizeError.js';
 
+// Capture the caller's environment once and restore it after every test.
+// Leaving NODE_ENV=production behind made React's JSX dev runtime fail in later
+// test files that share this Bun process (module state leaks across files).
+const originalEnv = process.env.NODE_ENV;
+
+afterEach(() => {
+  process.env.NODE_ENV = originalEnv;
+});
+
 describe('sanitizeError', () => {
-  const originalEnv = process.env.NODE_ENV;
-
-  afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
-  });
-
   test('returns generic message in production for internal errors', () => {
     process.env.NODE_ENV = 'production';
     expect(sanitizeError(new Error('SQL connection failed at 10.0.0.1'))).toBe(

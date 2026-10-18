@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 import React, { useState } from 'react';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react';
 
 const mockSelectionState = {
   selectedItems: { items: new Set(), files: new Map() },
@@ -290,15 +290,18 @@ describe('ActionButtons bulk Airlock', () => {
 
     fireEvent.click(screen.getByText('ActionButtons.bulkAirlockLock'));
 
-    await waitFor(() => {
-      expect(screen.getByText('ActionButtons.bulkAirlockLocking')).toBeTruthy();
-    });
+    // The pending label is set synchronously inside the click handler, so assert
+    // directly instead of polling with waitFor (which can deadlock with React's
+    // act environment when the mocked fetch promise stays pending).
+    expect(screen.getByText('ActionButtons.bulkAirlockLocking')).toBeTruthy();
     expect(screen.queryByText('ActionButtons.bulkAirlockUnlocking')).toBeNull();
 
-    resolveFetch();
-    await waitFor(() => {
-      expect(screen.queryByText('ActionButtons.bulkAirlockLocking')).toBeNull();
+    // Resolve the in-flight request; the handler clears the pending label.
+    await act(async () => {
+      resolveFetch();
     });
+
+    expect(screen.queryByText('ActionButtons.bulkAirlockLocking')).toBeNull();
   });
 
   it('runs bulk Lock with a bounded rolling pool (max 3 in flight)', async () => {

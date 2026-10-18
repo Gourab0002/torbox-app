@@ -23,7 +23,9 @@ export function writeLocale(locale, data) {
 }
 
 export function isSorted(raw, data) {
-  return raw === formatLocaleJson(data);
+  // Normalize line endings so the check behaves the same on Windows checkouts
+  // (git core.autocrlf) and Unix checkouts.
+  return raw.replace(/\r\n/g, '\n') === formatLocaleJson(data);
 }
 
 export function loadAllLocales(locales) {

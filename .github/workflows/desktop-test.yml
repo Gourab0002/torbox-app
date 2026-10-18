@@ -29,16 +29,18 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.3.12
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      # Each test file runs in its own process: bun's `mock.module()` registry is
+      # process-global and would otherwise leak between files (order-dependent results).
       - name: Frontend desktop bridge tests
-        run: bun test src/desktop/__tests__
+        run: bun scripts/run-isolated-tests.js --preload ./test-setup-dom.js src/desktop/__tests__
 
       - name: Frontend desktop store tests
-        run: bun test src/store/__tests__/desktopStore.test.js
+        run: bun scripts/run-isolated-tests.js --preload ./test-setup-dom.js src/store/__tests__/desktopStore.test.js
 
       - name: Install Linux system dependencies
         run: |

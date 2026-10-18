@@ -27,6 +27,33 @@ function applyDomGlobals(window) {
   globalThis.CustomEvent = window.CustomEvent;
   globalThis.DOMException = window.DOMException;
 
+  // happy-dom exposes these on its Window but Bun's global scope does not
+  // define them. Without this, DOM tests that animate (requestAnimationFrame)
+  // fail with "requestAnimationFrame is not defined".
+  const windowGlobals = [
+    'requestAnimationFrame',
+    'cancelAnimationFrame',
+    'requestIdleCallback',
+    'cancelIdleCallback',
+    'ResizeObserver',
+    'IntersectionObserver',
+    'HTMLCanvasElement',
+    'Element',
+    'SVGElement',
+  ];
+  for (const name of windowGlobals) {
+    if (window[name] !== undefined) {
+      globalThis[name] = window[name];
+    }
+  }
+
+  if (globalThis.localStorage === undefined && window.localStorage) {
+    globalThis.localStorage = window.localStorage;
+  }
+  if (globalThis.sessionStorage === undefined && window.sessionStorage) {
+    globalThis.sessionStorage = window.sessionStorage;
+  }
+
   for (const name of [
     'Error',
     'TypeError',

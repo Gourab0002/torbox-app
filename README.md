@@ -127,7 +127,7 @@ The browser Zustand store merges full snapshots with structural sharing (`src/ut
 
 ### Frontend
 
-- **Next.js 15** with App Router
+- **Next.js 16** with App Router
 - **React 19** with hooks
 - **Tailwind CSS** for styling
 - **Zustand** for state management

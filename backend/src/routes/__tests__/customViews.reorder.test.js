@@ -1,11 +1,13 @@
 import { describe, expect, test, beforeEach, afterEach } from 'bun:test';
 import { Database as SQLiteDatabase } from 'bun:sqlite';
-import { mkdirSync, rmSync } from 'fs';
+import { mkdirSync } from 'fs';
 import path from 'path';
 import DatabaseMaster from '../../database/Database.js';
 import UserDatabaseManager from '../../database/UserDatabaseManager.js';
+import cache from '../../utils/cache.js';
 import { up as createCustomViewsSchema } from '../../database/migrations/user/006_custom_views_schema.js';
 import { up as addSortOrder } from '../../database/migrations/user/021_custom_views_sort_order.js';
+import { removeTempDir } from './helpers/tempDirCleanup.js';
 
 const EMPTY_FILTERS = JSON.stringify({ groups: [], betweenGroups: 'and' });
 
@@ -60,7 +62,12 @@ describe('custom_views sort_order', () => {
     let userDb;
 
     beforeEach(async () => {
-      tempDir = path.join(process.cwd(), 'data', `test-custom-views-order-${Date.now()}`);
+      cache.clear();
+      tempDir = path.join(
+        process.cwd(),
+        'data',
+        `test-${process.pid}-custom-views-order-${Date.now()}`
+      );
       mkdirSync(path.join(tempDir, 'users'), { recursive: true });
       process.env.MASTER_DB_PATH = path.join(tempDir, 'master.db');
       process.env.USER_DB_DIR = path.join(tempDir, 'users');
@@ -83,7 +90,7 @@ describe('custom_views sort_order', () => {
     afterEach(() => {
       userDatabaseManager?.releaseConnection?.(authId);
       masterDatabase?.close?.();
-      rmSync(tempDir, { recursive: true, force: true });
+      removeTempDir(tempDir);
       delete process.env.MASTER_DB_PATH;
       delete process.env.USER_DB_DIR;
     });

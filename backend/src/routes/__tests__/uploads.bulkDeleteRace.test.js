@@ -1,8 +1,9 @@
 import { describe, expect, test, beforeEach, afterEach } from 'bun:test';
-import { mkdirSync, rmSync } from 'fs';
+import { mkdirSync } from 'fs';
 import path from 'path';
 import DatabaseMaster from '../../database/Database.js';
 import UserDatabaseManager from '../../database/UserDatabaseManager.js';
+import { removeTempDir } from './helpers/tempDirCleanup.js';
 import { deleteUploadAndDetermineStatus } from '../uploads.js';
 
 describe('bulk upload delete status race', () => {
@@ -12,7 +13,11 @@ describe('bulk upload delete status race', () => {
   const authId = 'test-auth-bulk-delete-race';
 
   beforeEach(async () => {
-    tempDir = path.join(process.cwd(), 'data', `test-bulk-delete-race-${Date.now()}`);
+    tempDir = path.join(
+      process.cwd(),
+      'data',
+      `test-${process.pid}-bulk-delete-race-${Date.now()}`
+    );
     mkdirSync(path.join(tempDir, 'users'), { recursive: true });
     process.env.MASTER_DB_PATH = path.join(tempDir, 'master.db');
     process.env.USER_DB_DIR = path.join(tempDir, 'users');
@@ -32,7 +37,7 @@ describe('bulk upload delete status race', () => {
 
   afterEach(() => {
     masterDatabase?.close?.();
-    rmSync(tempDir, { recursive: true, force: true });
+    removeTempDir(tempDir);
     delete process.env.MASTER_DB_PATH;
     delete process.env.USER_DB_DIR;
   });
